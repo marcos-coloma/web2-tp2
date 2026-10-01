@@ -7,7 +7,8 @@ package com.example.demo.client.dummyjson;
  * respuesta y nunca sale del paquete "client". El resto de la app trabaja
  * con com.example.demo.dto.producto.ProductoDTO.
  */
-public record DummyJsonProducto(
+
+public record DummyJsonProduct(
         Long id,
         String title,
         String description,
@@ -19,4 +20,5 @@ public record DummyJsonProducto(
         double rating,
         String thumbnail
 ) {
+
 }

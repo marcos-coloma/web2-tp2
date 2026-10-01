@@ -43,7 +43,7 @@ Los datos de conexión están en `application.properties`
 
 ### 2. Levantar la app
 
-```
+```bash
 # Windows
 .\mvnw.cmd spring-boot:run
 
@@ -56,9 +56,9 @@ hay ninguna migración de Flyway**, así que no se crea ninguna tabla propia
 todavía (eso es la consigna 2). Cuando el log muestre `Started
 DemoApplication`, la app queda escuchando en `http://localhost:8080`.
 
-Para compilar y correr los tests: `./mvnw test` (o `.\mvnw.cmd test`).
+`http://localhost:8080`
 
-## Endpoints disponibles hoy
+Para compilar y ejecutar los tests:
 
 | Método | Path | Qué hace |
 |---|---|---|
@@ -75,6 +75,10 @@ Documentación interactiva (Swagger UI):
 
 ## Estructura del proyecto
 
+En Windows:
+
+```bash
+.\mvnw.cmd test
 ```
 com.example.demo
 ├── controller/            → @RestController (HTTP in/out, nada de lógica)

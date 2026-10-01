@@ -6,8 +6,9 @@ package com.example.demo.exception;
  * para favoritos cuando se implemente su service — no hace falta crear una
  * excepción nueva por cada recurso.
  */
-public class RecursoNoEncontradoException extends RuntimeException {
-    public RecursoNoEncontradoException(String mensaje) {
-        super(mensaje);
+public class ResourceNotFoundException extends RuntimeException {
+
+    public ResourceNotFoundException(String message) {
+        super(message);
     }
 }

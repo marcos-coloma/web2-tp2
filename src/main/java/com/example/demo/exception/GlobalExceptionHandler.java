@@ -1,3 +1,8 @@
+
+
+
+
+
 package com.example.demo.exception;
 
 import org.slf4j.Logger;
@@ -8,9 +13,11 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 
 /**
  * Manejador centralizado de errores de toda la API. En vez de que cada
@@ -23,6 +30,9 @@ import java.util.Map;
  * RecursoNoEncontradoException o que el DTO de entrada tenga anotaciones
  * de Bean Validation para que estos mismos handlers respondan.
  */
+
+
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -33,24 +43,45 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(ServicioExternoException.class)
-    public ProblemDetail handleServicioExterno(ServicioExternoException ex) {
-        ProblemDetail problema = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, ex.getMessage());
-        problema.setTitle("Falla al consumir un servicio externo");
-        return problema;
+    @ExceptionHandler(ExternalServiceException.class)
+    public ProblemDetail handleExternalService(ExternalServiceException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_GATEWAY,
+                ex.getMessage()
+        );
+        problem.setTitle("Falla al consumir un servicio externo");
+        return problem;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidacion(MethodArgumentNotValidException ex) {
-        Map<String, String> errores = new LinkedHashMap<>();
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new LinkedHashMap<>();
+
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errores.put(error.getField(), error.getDefaultMessage());
+            errors.put(error.getField(), error.getDefaultMessage());
         }
-        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST, "Uno o más campos no son válidos");
-        problema.setTitle("Error de validación");
-        problema.setProperty("errores", errores);
-        return problema;
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Uno o más campos no son válidos"
+        );
+        problem.setTitle("Error de validación");
+        problem.setProperty("errores", errors);
+
+        return problem;
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ProblemDetail handleParameterValidation(
+            HandlerMethodValidationException ex) {
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "Uno o más parámetros no son válidos"
+        );
+        problem.setTitle("Error de validación");
+
+        return problem;
     }
 
     @ExceptionHandler(Exception.class)

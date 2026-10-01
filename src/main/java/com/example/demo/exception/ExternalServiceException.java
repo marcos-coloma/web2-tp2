@@ -6,8 +6,9 @@ package com.example.demo.exception;
  * interpretar. Se traduce a un 5xx propio en {@link GlobalExceptionHandler}
  * en vez de dejar que el cliente vea la excepción cruda de RestClient.
  */
-public class ServicioExternoException extends RuntimeException {
-    public ServicioExternoException(String mensaje, Throwable causa) {
-        super(mensaje, causa);
+public class ExternalServiceException extends RuntimeException {
+
+    public ExternalServiceException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
