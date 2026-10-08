@@ -109,6 +109,7 @@ Los favoritos se guardan en PostgreSQL mediante JPA. Para crear o actualizar un 
 | Método | Path | Descripción |
 |---|---|---|
 | POST | `/api/listas` | Crea una lista |
+| POST | `/api/listas/{origenId}/mover-favoritos` | Mueve los favoritos a otra lista y elimina la lista de origen |
 | GET | `/api/listas` | Lista todas las listas |
 | GET | `/api/listas/{id}` | Obtiene una lista por ID |
 | GET | `/api/listas/{id}/favoritos` | Obtiene los favoritos de una lista |
@@ -153,7 +154,8 @@ com.example.demo
 │   └── Lista
 ├── dto/
 │   ├── producto/
-│   └── favorito/
+│   ├── favorito/
+│   └── lista/
 ├── client/
 │   └── dummyjson/
 ├── exception/
@@ -255,7 +257,7 @@ Con `@Transactional`, si ocurre un error que provoca rollback, se revierten las 
 - `postgresql`: driver JDBC de PostgreSQL.
 - `spring-boot-starter-flyway` y `flyway-database-postgresql`: integración y migraciones de Flyway.
 
-## Trabajo pendiente
 
-- **Swagger:** agregar descripciones `@Operation` a los endpoints de listas y verificar que la documentación refleje los tres grupos de endpoints.
-- **README:** documentar la transacción en relación con la propiedad de atomicidad de ACID y comprobar las instrucciones de ejecución y migraciones en una base con datos previos.
+
+
+
