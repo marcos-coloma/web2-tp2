@@ -233,6 +233,19 @@ En JPA, esta relación se representa con `@ManyToOne` en `FavoritoEntity`, utili
 
 Para consultar los favoritos de una lista se utiliza una consulta derivada del repositorio JPA, evitando mantener una colección bidireccional `@OneToMany` en `ListaEntity`.
 
+
+### ¿Por qué usamos `@Transactional`?
+
+El método `moverFavoritos` utiliza `@Transactional` para que todas las modificaciones de la operación se realicen como una única transacción.
+
+Esto se relaciona con la **atomicidad**, una de las propiedades ACID: todas las operaciones deben completarse correctamente o, si ocurre un error que provoca rollback, los cambios deben revertirse.
+
+Si quitáramos `@Transactional` y fallara una escritura después de que otra ya se hubiera confirmado, la base de datos podría quedar en un estado inconsistente. Por ejemplo, algunos favoritos podrían haberse movido a la lista destino, pero la lista origen podría no haberse eliminado. También podrían quedar solamente algunos favoritos trasladados si fallara una actualización a mitad del proceso.
+
+Con `@Transactional`, si ocurre un error que provoca rollback, se revierten las modificaciones realizadas dentro de la transacción, evitando que quede aplicada solamente una parte de la operación.
+
+
+
 ## Dependencias principales
 
 - `spring-boot-starter-webmvc`: endpoints REST.
@@ -244,6 +257,5 @@ Para consultar los favoritos de una lista se utiliza una consulta derivada del r
 
 ## Trabajo pendiente
 
-- **Transacciones:** implementar `POST /api/listas/{origenId}/mover-favoritos` para reasignar los favoritos y eliminar la lista de origen dentro de una transacción con `@Transactional`.
 - **Swagger:** agregar descripciones `@Operation` a los endpoints de listas y verificar que la documentación refleje los tres grupos de endpoints.
 - **README:** documentar la transacción en relación con la propiedad de atomicidad de ACID y comprobar las instrucciones de ejecución y migraciones en una base con datos previos.

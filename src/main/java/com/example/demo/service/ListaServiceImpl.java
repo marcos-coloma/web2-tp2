@@ -7,6 +7,7 @@ import com.example.demo.exception.RecursoNoEncontradoException;
 import com.example.demo.repository.FavoritoRepository;
 import com.example.demo.repository.ListaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
@@ -58,6 +59,30 @@ public class ListaServiceImpl implements ListaService {
                 .filter(favorito -> favorito.listaId().equals(id))
                 .toList();
     }
+
+    @Override
+    @Transactional
+    public void moverFavoritos(Long origenId, Long destinoId) {
+        Lista origen = obtener(origenId);
+        Lista destino = obtener(destinoId);
+
+        List<Favorito> favoritos = favoritoRepository.findByListaId(origenId);
+
+        for (Favorito favorito : favoritos) {
+            Favorito actualizado = new Favorito(
+                    favorito.id(),
+                    favorito.productoId(),
+                    destino.id(),
+                    favorito.nota(),
+                    favorito.fechaAgregado()
+            );
+
+            favoritoRepository.save(actualizado);
+        }
+
+        listaRepository.deleteById(origen.id());
+    }
+
 
     @Override
     public void eliminar(Long id) {

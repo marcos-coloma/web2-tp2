@@ -16,5 +16,6 @@ public interface ListaService {
     List<Lista> listar();
     Lista obtener(Long id);
     List<Favorito> listarFavoritos(Long id);
+    void moverFavoritos(Long origenId, Long destinoId);
     void eliminar(Long id);
 }

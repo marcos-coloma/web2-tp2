@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import com.example.demo.domain.Favorito;
 import com.example.demo.domain.Lista;
+import com.example.demo.dto.lista.MoverFavoritosRequest;
 import com.example.demo.service.ListaService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,15 @@ public class ListaController {
         return ResponseEntity
                 .created(location)
                 .body(creada);
+    }
+
+    @PostMapping("/{origenId}/mover-favoritos")
+    public ResponseEntity<Void> moverFavoritos(
+            @PathVariable Long origenId,
+            @RequestBody MoverFavoritosRequest request
+    ) {
+        service.moverFavoritos(origenId, request.listaDestinoId());
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping

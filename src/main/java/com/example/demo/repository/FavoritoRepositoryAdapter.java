@@ -52,6 +52,20 @@ public class FavoritoRepositoryAdapter implements FavoritoRepository {
                 ));
     }
 
+@Override
+public List<Favorito> findByListaId(Long listaId) {
+    return jpaRepository.findByListaId(listaId)
+            .stream()
+            .map(entity -> new Favorito(
+                    entity.getId(),
+                    entity.getProductoId(),
+                    entity.getLista().getId(),
+                    entity.getNota(),
+                    entity.getFechaAgregado()
+            ))
+            .toList();
+}
+
     @Override
     public Favorito save(Favorito favorito) {
         ListaEntity lista = listaJpaRepository.findById(favorito.listaId())
