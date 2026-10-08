@@ -6,10 +6,6 @@ PostgreSQL/JPA/Flyway ya está armada, pero la lógica de persistencia todavía
 no se tocó**: `favoritos` sigue exactamente igual que en el TP1, guardado en
 memoria.
 
-> ⚠️ **Favoritos sigue en memoria.** `InMemoryFavoritoRepository` no se tocó.
-> Reemplazarlo por un adapter JPA — sin modificar `FavoritoService` ni
-> `FavoritoController` — es el corazón de este práctico.
-
 La consigna completa (con el porqué de cada paso) y la presentación
 **"TP2: persistencia y arquitectura hexagonal"** están publicadas en el sitio
 de la materia, sección *Trabajos prácticos → TP2*.
@@ -86,12 +82,12 @@ com.example.demo
 │   ├── FavoritoService / FavoritoServiceImpl
 │   └── ListaService / ListaServiceImpl    ⬜ para armar en clase
 ├── repository/            → puertos + adapters
-│   ├── FavoritoRepository          (puerto — no debería cambiar de forma)
-│   ├── InMemoryFavoritoRepository  → se REEMPLAZA por un adapter JPA ⬜
+│   ├── FavoritoRepository          (puerto)
 │   ├── ListaRepository             ⬜ para armar en clase (puerto)
-│   ├── FavoritoJpaRepository / FavoritoRepositoryAdapter  ⬜ para armar en clase
+│   ├── FavoritoJpaRepository / FavoritoRepositoryAdapter 
 │   └── ListaJpaRepository / ListaRepositoryAdapter        ⬜ para armar en clase
-├── entity/                ⬜ no existe todavía — @Entity de JPA (FavoritoEntity, ListaEntity)
+├── entity/                @Entity de JPA (FavoritoEntity, ListaEntity)
+│   ├──FavoritoEntity
 ├── domain/                → entidades de dominio (records, inmutables)
 │   ├── Favorito                   (le va a faltar sumar listaId)
 │   └── Lista                      ⬜ para armar en clase
@@ -114,19 +110,16 @@ Las líneas marcadas ⬜ todavía no existen en el repo.
 
 ## Migraciones (Flyway)
 
-`src/main/resources/db/migration/` **todavía no existe** — la primera
-consigna del práctico es crearla, con `V1__create_favoritos.sql`. A partir de
-ahí, cada cambio de esquema es una migración nueva (`V2`, `V3`...), nunca
-editando una ya aplicada.
+Las migraciones de base de datos se encuentran en:
+
+`src/main/resources/db/migration/`
+
+La primera migración creada fue `V1__create_favoritos.sql`, que crea la tabla `favoritos`.
+
+A partir de ahora, cada cambio en el esquema de la base de datos debe realizarse mediante una nueva migración (`V2`, `V3`, etc.), sin modificar una migración que ya haya sido aplicada.
 
 ## Qué queda por hacer
 
-1. **Migraciones iniciales** — `V1__create_favoritos.sql` (tabla `favoritos`).
-2. **Favoritos sobre JPA** — `FavoritoEntity`, `FavoritoJpaRepository`,
-   `FavoritoRepositoryAdapter` (implementa el puerto `FavoritoRepository` que
-   ya existe). Eliminar `InMemoryFavoritoRepository`. Ni `FavoritoService` ni
-   `FavoritoController` deberían cambiar.
-3. **Documentar** qué cambió y qué no al migrar de memoria a JPA.
 4. **Listas** — dominio `Lista`, puerto `ListaRepository`, `ListaEntity`,
    adapter, service, controller (`/api/listas`, con el endpoint de favoritos
    de una lista). Relación `@ManyToOne` en `FavoritoEntity` hacia
@@ -153,3 +146,32 @@ Ya agregadas al `pom.xml`, listas para usar:
 - `spring-boot-starter-flyway` + `flyway-database-postgresql` — migraciones.
   **Ojo:** en Spring Boot 4.x, `flyway-core` solo **no alcanza** — la
   autoconfiguración de Flyway se movió a este starter separado.
+
+
+
+
+## Migración de memoria a JPA
+
+### Qué no cambió
+
+- `FavoritoService y su impementacion`
+- `FavoritoController`
+- `DTOs de favoritos`
+- `FavoritoRepository`
+
+Estas clases no necesitaron cambios porque `FavoritoRepository` funciona como
+puerto/contrato. El Service utiliza esa interfaz y no depende de cómo se
+guarden los datos.
+
+### Qué cambió
+
+- Se eliminó `InMemoryFavoritoRepository`.
+- Se creó `FavoritoEntity` para representar la tabla `favoritos`.
+- Se creó `FavoritoJpaRepository` para acceder a la base de datos mediante
+  Spring Data JPA.
+- Se creó `FavoritoRepositoryAdapter`, que implementa `FavoritoRepository` y
+  traduce entre `Favorito` y `FavoritoEntity`.
+
+De esta forma, el Service continúa trabajando con `FavoritoRepository` y no
+necesita conocer si la persistencia se realiza en memoria o mediante JPA y
+PostgreSQL.
