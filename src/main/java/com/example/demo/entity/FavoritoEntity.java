@@ -4,11 +4,10 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Entidad JPA que representa una lista en la tabla "listas".
- * Se utiliza como modelo de persistencia y se convierte al dominio Lista
- * mediante el ListaRepositoryAdapter.
+ * Entidad JPA que representa un favorito en la tabla "favoritos".
+ * Se utiliza como modelo de persistencia y se convierte al dominio Favorito
+ * mediante el FavoritoRepositoryAdapter.
  */
-
 @Entity
 @Table(name = "favoritos")
 public class FavoritoEntity {
@@ -25,17 +24,27 @@ public class FavoritoEntity {
     @Column(name = "fecha_alta", nullable = false)
     private LocalDateTime fechaAgregado;
 
+    @ManyToOne
+    @JoinColumn(name = "lista_id")
+    private ListaEntity lista;
+
     public FavoritoEntity() {
     }
 
-    public FavoritoEntity(Long id, Long productoId, String nota, LocalDateTime fechaAgregado) {
+    public FavoritoEntity(
+            Long id,
+            Long productoId,
+            String nota,
+            LocalDateTime fechaAgregado,
+            ListaEntity lista
+    ) {
         this.id = id;
         this.productoId = productoId;
         this.nota = nota;
         this.fechaAgregado = fechaAgregado;
+        this.lista = lista;
     }
 
-    // getters y setters
     public Long getId() {
         return id;
     }
@@ -66,5 +75,13 @@ public class FavoritoEntity {
 
     public void setFechaAgregado(LocalDateTime fechaAgregado) {
         this.fechaAgregado = fechaAgregado;
+    }
+
+    public ListaEntity getLista() {
+        return lista;
+    }
+
+    public void setLista(ListaEntity lista) {
+        this.lista = lista;
     }
 }

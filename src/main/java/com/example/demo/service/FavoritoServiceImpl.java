@@ -38,34 +38,54 @@ public class FavoritoServiceImpl implements FavoritoService {
 
     @Override
     public FavoritoResponse crear(FavoritoRequest request) {
-        Favorito nuevo = new Favorito(null, request.productoId(), request.nota(), LocalDateTime.now());
+        Favorito nuevo = new Favorito(
+                null,
+                request.productoId(),
+                request.listaId(),
+                request.nota(),
+                LocalDateTime.now()
+        );
+
         return aResponse(repository.save(nuevo));
     }
 
     @Override
     public FavoritoResponse actualizar(Long id, FavoritoRequest request) {
         Favorito existente = buscarOFallar(id);
+
         Favorito actualizado = new Favorito(
                 existente.id(),
                 request.productoId(),
+                request.listaId(),
                 request.nota(),
-                existente.fechaAgregado()   // no se pisa la fecha original al actualizar
+                existente.fechaAgregado()
         );
+
         return aResponse(repository.save(actualizado));
     }
 
     @Override
     public void eliminar(Long id) {
-        buscarOFallar(id);   // si no existe, tira 404 antes de intentar borrar
+        buscarOFallar(id);
         repository.deleteById(id);
     }
 
     private Favorito buscarOFallar(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el favorito con id " + id));
+                .orElseThrow(() ->
+                        new RecursoNoEncontradoException(
+                                "No existe el favorito con id " + id
+                        )
+                );
     }
 
     private FavoritoResponse aResponse(Favorito favorito) {
-        return new FavoritoResponse(favorito.id(), favorito.productoId(), favorito.nota(), favorito.fechaAgregado());
+        return new FavoritoResponse(
+                favorito.id(),
+                favorito.productoId(),
+                favorito.listaId(),
+                favorito.nota(),
+                favorito.fechaAgregado()
+        );
     }
 }
