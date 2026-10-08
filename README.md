@@ -1,177 +1,249 @@
 # TP2 · Persistencia, migraciones y arquitectura hexagonal
 
-Punto de partida para el práctico. Sale directo de un TP1 ya resuelto
-(`productos` + `favoritos`, ambos completos) — **la infraestructura de
-PostgreSQL/JPA/Flyway ya está armada, pero la lógica de persistencia todavía
-no se tocó**: `favoritos` sigue exactamente igual que en el TP1, guardado en
-memoria.
-
-La consigna completa (con el porqué de cada paso) y la presentación
-**"TP2: persistencia y arquitectura hexagonal"** están publicadas en el sitio
-de la materia, sección *Trabajos prácticos → TP2*.
+Proyecto práctico de Spring Boot para trabajar con persistencia en PostgreSQL, JPA, Flyway, arquitectura por capas y puertos y adapters. Parte del TP1, que incluía un catálogo de productos consumido desde DummyJSON y un CRUD de favoritos en memoria.
 
 ## Cómo levantar el proyecto
 
-Requiere Java 25. Usar siempre el wrapper, nunca un `mvn` instalado aparte.
+Requiere Java 25. Usar siempre el wrapper de Maven, no un `mvn` instalado aparte.
 
 ### 1. Base de datos
 
-**Opción A — Docker (recomendada):**
+**Opción A — Docker (recomendada)**
 
-```
+```bash
 docker compose up -d
 ```
 
-Levanta PostgreSQL con la base `webii_tp2` y el usuario `webii_tp2` (ver
-`docker-compose.yml`), en el puerto `5432`.
+Levanta PostgreSQL 17 con la base `webii_tp2` y el usuario `webii_tp2`, utilizando el volumen `demo-postgres-data` para conservar los datos entre reinicios del contenedor.
 
-**Opción B — PostgreSQL local:** si no podés usar Docker, instalá
-PostgreSQL localmente y creá la base y el rol a mano (por ejemplo desde
-pgAdmin, Query Tool sobre la base `postgres`):
+**Opción B — PostgreSQL local**
+
+Instalá PostgreSQL y creá el usuario y la base de datos. Por ejemplo, desde pgAdmin o una sesión de PostgreSQL con permisos suficientes:
 
 ```sql
-CREATE ROLE webii_tp2 WITH LOGIN PASSWORD 'webii_tp2' SUPERUSER;
+CREATE ROLE webii_tp2 WITH LOGIN PASSWORD 'webii_tp2';
 CREATE DATABASE webii_tp2 OWNER webii_tp2;
 ```
 
-Los datos de conexión están en `application.properties`
-(`spring.datasource.*`) — si usás otro usuario/base, ajustalos ahí.
+Si el rol o la base ya existen, no hace falta crearlos nuevamente.
 
-### 2. Levantar la app
+Los datos de conexión están en `src/main/resources/application.properties`, en las propiedades `spring.datasource.*`.
 
-```
-# Windows
+### 2. Levantar la aplicación
+
+Desde la raíz del proyecto:
+
+**Windows (PowerShell)**
+
+```powershell
 .\mvnw.cmd spring-boot:run
+```
 
-# macOS/Linux
+**macOS/Linux**
+
+```bash
 ./mvnw spring-boot:run
 ```
 
-Con la base arriba, la app debería levantar sin errores — pero **todavía no
-hay ninguna migración de Flyway**, así que no se crea ninguna tabla propia
-todavía (eso es la consigna 2). Cuando el log muestre `Started
-DemoApplication`, la app queda escuchando en `http://localhost:8080`.
+Al iniciar la aplicación, Flyway valida y ejecuta las migraciones pendientes. Si la base y el esquema son compatibles con las entidades JPA, Spring Boot debería iniciar sin errores.
 
-Para compilar y correr los tests: `./mvnw test` (o `.\mvnw.cmd test`).
+La API queda disponible en `http://localhost:8080`.
 
-## Endpoints disponibles hoy
+Para ejecutar los tests:
 
-| Método | Path | Qué hace |
+```bash
+./mvnw test
+```
+
+En Windows también se puede usar `.\mvnw.cmd test`.
+
+### 3. Verificar las migraciones
+
+Se puede comprobar el historial de Flyway desde PostgreSQL:
+
+```sql
+SELECT version, description, success
+FROM flyway_schema_history
+ORDER BY installed_rank;
+```
+
+Las migraciones aplicadas deben figurar con `success = true`.
+
+También se puede comprobar que no haya favoritos sin lista:
+
+```sql
+SELECT COUNT(*)
+FROM favoritos
+WHERE lista_id IS NULL;
+```
+
+El resultado esperado es `0`.
+
+## Endpoints disponibles
+
+### Productos
+
+| Método | Path | Descripción |
 |---|---|---|
-| GET | `/health` | Chequeo de salud básico |
-| GET | `/ping` | Devuelve `pong`, sin JSON |
-| GET | `/api/productos?limit=&skip=` | Catálogo, de solo lectura (consume DummyJSON) |
-| GET | `/api/productos/{id}` | Un producto puntual. 404 si no existe |
-| GET / POST | `/api/favoritos` | Listar / crear favoritos — **en memoria, TP1** |
-| GET / PUT / DELETE | `/api/favoritos/{id}` | Obtener, actualizar o eliminar un favorito — **en memoria, TP1** |
+| GET | `/health` | Chequeo de salud |
+| GET | `/ping` | Devuelve `pong` |
+| GET | `/api/productos?limit=&skip=` | Consulta el catálogo de DummyJSON |
+| GET | `/api/productos/{id}` | Obtiene un producto por ID; devuelve 404 si no existe |
 
-Documentación interactiva (Swagger UI):
-**http://localhost:8080/swagger-ui/index.html**
-(el JSON crudo de OpenAPI está en `/v3/api-docs`).
+El catálogo de productos es de solo lectura y consume una API externa.
+
+### Favoritos
+
+| Método | Path | Descripción |
+|---|---|---|
+| GET | `/api/favoritos` | Lista los favoritos |
+| POST | `/api/favoritos` | Crea un favorito |
+| GET | `/api/favoritos/{id}` | Obtiene un favorito por ID |
+| PUT | `/api/favoritos/{id}` | Actualiza un favorito |
+| DELETE | `/api/favoritos/{id}` | Elimina un favorito |
+
+Los favoritos se guardan en PostgreSQL mediante JPA. Para crear o actualizar un favorito, el request incluye `productoId`, `listaId` y `nota`.
+
+### Listas de favoritos
+
+| Método | Path | Descripción |
+|---|---|---|
+| POST | `/api/listas` | Crea una lista |
+| GET | `/api/listas` | Lista todas las listas |
+| GET | `/api/listas/{id}` | Obtiene una lista por ID |
+| GET | `/api/listas/{id}/favoritos` | Obtiene los favoritos de una lista |
+| DELETE | `/api/listas/{id}` | Elimina una lista vacía |
+
+Las listas y los favoritos se persisten en PostgreSQL. No se permite eliminar una lista que todavía tenga favoritos: la API responde `409 Conflict`. Los recursos inexistentes responden `404 Not Found`.
+
+### Swagger / OpenAPI
+
+La interfaz interactiva está disponible en:
+
+`http://localhost:8080/swagger-ui/index.html`
+
+El documento OpenAPI en formato JSON se encuentra en:
+
+`http://localhost:8080/v3/api-docs`
 
 ## Estructura del proyecto
 
-```
+```text
 com.example.demo
-├── controller/            → @RestController (HTTP in/out, nada de lógica)
+├── controller/
 │   ├── ProductoController
 │   ├── FavoritoController
-│   └── ListaController            ⬜ para armar en clase
-├── service/               → interfaz + implementación, lógica de negocio
+│   └── ListaController
+├── service/
 │   ├── ProductoService / ProductoServiceImpl
 │   ├── FavoritoService / FavoritoServiceImpl
-│   └── ListaService / ListaServiceImpl    ⬜ para armar en clase
-├── repository/            → puertos + adapters
-│   ├── FavoritoRepository          (puerto)
-│   ├── ListaRepository             ⬜ para armar en clase (puerto)
-│   ├── FavoritoJpaRepository / FavoritoRepositoryAdapter 
-│   └── ListaJpaRepository / ListaRepositoryAdapter        ⬜ para armar en clase
-├── entity/                @Entity de JPA (FavoritoEntity, ListaEntity)
-│   ├──FavoritoEntity
-├── domain/                → entidades de dominio (records, inmutables)
-│   ├── Favorito                   (le va a faltar sumar listaId)
-│   └── Lista                      ⬜ para armar en clase
+│   └── ListaService / ListaServiceImpl
+├── repository/
+│   ├── FavoritoRepository
+│   ├── FavoritoJpaRepository
+│   ├── FavoritoRepositoryAdapter
+│   ├── ListaRepository
+│   ├── ListaJpaRepository
+│   └── ListaRepositoryAdapter
+├── entity/
+│   ├── FavoritoEntity
+│   └── ListaEntity
+├── domain/
+│   ├── Favorito
+│   └── Lista
 ├── dto/
-│   ├── producto/          → ProductoDTO, ProductoPageResponse
-│   ├── favorito/          → FavoritoRequest, FavoritoResponse (les va a faltar listaId)
-│   └── lista/              ⬜ para armar en clase
-├── client/dummyjson/      → todo lo que sabe hablar con la API externa
-├── exception/             → manejo uniforme de errores
-│   ├── RecursoNoEncontradoException  (404, ya existe)
-│   ├── ServicioExternoException      (5xx, ya existe)
-│   ├── ListaNoVaciaException         ⬜ para armar en clase (409)
-│   └── GlobalExceptionHandler        (@RestControllerAdvice, ya existe)
+│   ├── producto/
+│   └── favorito/
+├── client/
+│   └── dummyjson/
+├── exception/
+│   ├── RecursoNoEncontradoException
+│   ├── ServicioExternoException
+│   ├── ConflictoRecursoException
+│   └── GlobalExceptionHandler
 └── config/
     ├── RestClientConfig
     └── OpenApiConfig
 ```
 
-Las líneas marcadas ⬜ todavía no existen en el repo.
+Los controllers gestionan HTTP, los services contienen la lógica de negocio y los repositorios abstraen el acceso a los datos. Los adapters traducen entre los modelos de dominio y las entidades JPA.
 
-## Migraciones (Flyway)
+`Favorito` y `Lista` son modelos de dominio; `FavoritoEntity` y `ListaEntity` representan las tablas de la base de datos.
 
-Las migraciones de base de datos se encuentran en:
+## Persistencia y configuración JPA
+
+El proyecto utiliza Spring Data JPA y Hibernate para acceder a PostgreSQL.
+
+En `application.properties`:
+
+- `spring.jpa.hibernate.ddl-auto=validate`: Hibernate verifica que las entidades sean compatibles con el esquema existente, pero no crea ni modifica las tablas.
+- `spring.jpa.open-in-view=false`: desactiva Open EntityManager in View.
+
+Los cambios en el esquema se gestionan mediante Flyway, no mediante actualizaciones automáticas de Hibernate.
+
+## Migraciones de Flyway
+
+Las migraciones están en:
 
 `src/main/resources/db/migration/`
 
-La primera migración creada fue `V1__create_favoritos.sql`, que crea la tabla `favoritos`.
+| Migración | Propósito |
+|---|---|
+| `V1__create_favoritos.sql` | Crea la tabla `favoritos` |
+| `V2__create_listas.sql` | Crea la tabla `listas` |
+| `V3__add_lista_id_a_favoritos.sql` | Agrega `lista_id` y la clave foránea hacia `listas(id)` |
+| `V4__lista_id_obligatorio.sql` | Asigna los favoritos sin lista a una lista por defecto y establece `lista_id` como obligatorio |
 
-A partir de ahora, cada cambio en el esquema de la base de datos debe realizarse mediante una nueva migración (`V2`, `V3`, etc.), sin modificar una migración que ya haya sido aplicada.
+Cada migración versionada se ejecuta una sola vez y queda registrada en `flyway_schema_history`.
 
-## Qué queda por hacer
+Las migraciones que ya fueron aplicadas no deben modificarse. Si el esquema necesita evolucionar, se crea una nueva migración para conservar el historial y permitir que otras bases de datos apliquen los mismos cambios.
 
-4. **Listas** — dominio `Lista`, puerto `ListaRepository`, `ListaEntity`,
-   adapter, service, controller (`/api/listas`, con el endpoint de favoritos
-   de una lista). Relación `@ManyToOne` en `FavoritoEntity` hacia
-   `ListaEntity`, sin `@OneToMany` bidireccional — resolver el lado inverso
-   con una consulta derivada. Migraciones `V2` (listas) y `V3` (`lista_id` en
-   favoritos, nullable).
-5. **Evolución del esquema** — `V4`: backfill de una lista por defecto para
-   los favoritos existentes, y recién ahí `lista_id NOT NULL`.
-6. **Transacción** — `POST /api/listas/{origenId}/mover-favoritos`, con
-   `@Transactional` en el Service.
-7. **Manejo de errores** — borrar una lista con favoritos debe responder
-   `409 Conflict`, no `500`.
-8. **Documentación** — Swagger con los tres grupos de endpoints, y el
-   `README` actualizado con las dos justificaciones que pide la consigna.
+### Evolución del esquema
 
-## Dependencias
+La migración V3 permite inicialmente que `lista_id` sea nulo, porque pueden existir favoritos creados antes de incorporar las listas.
 
-Ya agregadas al `pom.xml`, listas para usar:
+La migración V4 crea la lista por defecto `Sin clasificar` si no existe, asigna a ella los favoritos que todavía tienen `lista_id` nulo y recién después establece la restricción `NOT NULL`.
 
-- `spring-boot-starter-webmvc`, `spring-boot-starter-validation`,
-  `springdoc-openapi-starter-webmvc-ui` — del TP1.
-- `spring-boot-starter-data-jpa` — Spring Data JPA + Hibernate.
-- `postgresql` — driver JDBC (scope `runtime`).
-- `spring-boot-starter-flyway` + `flyway-database-postgresql` — migraciones.
-  **Ojo:** en Spring Boot 4.x, `flyway-core` solo **no alcanza** — la
-  autoconfiguración de Flyway se movió a este starter separado.
-
-
-
+Esto permite adaptar los datos existentes antes de imponer la nueva condición del esquema.
 
 ## Migración de memoria a JPA
 
-### Qué no cambió
+### Qué se mantuvo
 
-- `FavoritoService y su impementacion`
-- `FavoritoController`
-- `DTOs de favoritos`
-- `FavoritoRepository`
+- `FavoritoService` y su implementación.
+- `FavoritoController`.
+- `FavoritoRepository`, como contrato de acceso a datos.
 
-Estas clases no necesitaron cambios porque `FavoritoRepository` funciona como
-puerto/contrato. El Service utiliza esa interfaz y no depende de cómo se
-guarden los datos.
+El service depende de la interfaz `FavoritoRepository`, no de una implementación concreta de persistencia.
 
 ### Qué cambió
 
 - Se eliminó `InMemoryFavoritoRepository`.
 - Se creó `FavoritoEntity` para representar la tabla `favoritos`.
-- Se creó `FavoritoJpaRepository` para acceder a la base de datos mediante
-  Spring Data JPA.
-- Se creó `FavoritoRepositoryAdapter`, que implementa `FavoritoRepository` y
-  traduce entre `Favorito` y `FavoritoEntity`.
+- Se creó `FavoritoJpaRepository`, basado en `JpaRepository`.
+- Se creó `FavoritoRepositoryAdapter`, que implementa el puerto `FavoritoRepository` y traduce entre `Favorito` y `FavoritoEntity`.
 
-De esta forma, el Service continúa trabajando con `FavoritoRepository` y no
-necesita conocer si la persistencia se realiza en memoria o mediante JPA y
-PostgreSQL.
+La persistencia pudo cambiar de memoria a PostgreSQL sin que el controller tuviera que conocer los detalles de JPA.
+
+## Relación entre listas y favoritos
+
+Una lista puede contener varios favoritos, mientras que cada favorito referencia una lista mediante `listaId`.
+
+En JPA, esta relación se representa con `@ManyToOne` en `FavoritoEntity`, utilizando la columna `lista_id` como clave foránea.
+
+Para consultar los favoritos de una lista se utiliza una consulta derivada del repositorio JPA, evitando mantener una colección bidireccional `@OneToMany` en `ListaEntity`.
+
+## Dependencias principales
+
+- `spring-boot-starter-webmvc`: endpoints REST.
+- `spring-boot-starter-validation`: validación de requests.
+- `springdoc-openapi-starter-webmvc-ui`: Swagger / OpenAPI.
+- `spring-boot-starter-data-jpa`: Spring Data JPA e integración con Hibernate.
+- `postgresql`: driver JDBC de PostgreSQL.
+- `spring-boot-starter-flyway` y `flyway-database-postgresql`: integración y migraciones de Flyway.
+
+## Trabajo pendiente
+
+- **Transacciones:** implementar `POST /api/listas/{origenId}/mover-favoritos` para reasignar los favoritos y eliminar la lista de origen dentro de una transacción con `@Transactional`.
+- **Swagger:** agregar descripciones `@Operation` a los endpoints de listas y verificar que la documentación refleje los tres grupos de endpoints.
+- **README:** documentar la transacción en relación con la propiedad de atomicidad de ACID y comprobar las instrucciones de ejecución y migraciones en una base con datos previos.
