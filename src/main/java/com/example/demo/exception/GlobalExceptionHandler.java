@@ -64,4 +64,14 @@ public class GlobalExceptionHandler {
         problema.setTitle("Error interno");
         return problema;
     }
+
+    @ExceptionHandler(ConflictoRecursoException.class)
+    public ProblemDetail handleConflicto(ConflictoRecursoException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                ex.getMessage()
+        );
+        problema.setTitle("Conflicto con el recurso");
+        return problema;
+    }
 }
