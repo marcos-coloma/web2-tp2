@@ -6,6 +6,11 @@ import com.example.demo.domain.Favorito;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Adapter que implementa el puerto ListaRepository usando JPA.
+ * Traduce entre el dominio Lista y la entidad ListaEntity.
+ */
+
 @Repository
 public class FavoritoRepositoryAdapter implements FavoritoRepository {
 

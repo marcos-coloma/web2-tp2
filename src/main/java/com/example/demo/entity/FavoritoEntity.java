@@ -1,8 +1,13 @@
 package com.example.demo.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
+
+/**
+ * Entidad JPA que representa una lista en la tabla "listas".
+ * Se utiliza como modelo de persistencia y se convierte al dominio Lista
+ * mediante el ListaRepositoryAdapter.
+ */
 
 @Entity
 @Table(name = "favoritos")
