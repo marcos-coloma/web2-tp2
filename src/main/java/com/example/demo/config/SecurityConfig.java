@@ -1,22 +1,28 @@
 package com.example.demo.config;
 
+import com.example.demo.security.JwtAuthenticationFilter;
+import com.example.demo.service.JwtService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Configura las reglas de seguridad HTTP de la aplicación.
- * Define los endpoints públicos, los recursos que requieren autenticación
- * y la política de sesiones utilizada por Spring Security.
+ * Define los endpoints públicos, los recursos que requieren autenticación,
+ * la política de sesiones y la integración del filtro JWT.
  */
 @Configuration
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtService jwtService
+    ) {
         return http
                 .csrf(csrf -> csrf.disable())
 
@@ -26,9 +32,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/auth/registro",
-                                "/api/auth/login"
+                                "/api/auth/**",
+                                "/api/productos/**"
                         ).permitAll()
 
                         .requestMatchers(
@@ -40,8 +45,23 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
+                .exceptionHandling(exceptions ->
+                        exceptions.authenticationEntryPoint(
+                                (request, response, exception) ->
+                                        response.sendError(
+                                                HttpServletResponse.SC_UNAUTHORIZED,
+                                                "No autenticado"
+                                        )
+                        )
+                )
+
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable())
+
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtService),
+                        UsernamePasswordAuthenticationFilter.class
+                )
 
                 .build();
     }

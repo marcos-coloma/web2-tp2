@@ -8,7 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
+import org.springframework.security.authentication.BadCredentialsException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -72,6 +72,16 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
         problema.setTitle("Conflicto con el recurso");
+        return problema;
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ProblemDetail handleCredencialesInvalidas(BadCredentialsException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED,
+                "Credenciales inválidas"
+        );
+        problema.setTitle("Error de autenticación");
         return problema;
     }
 }

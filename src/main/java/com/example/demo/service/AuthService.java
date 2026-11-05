@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import com.example.demo.dto.auth.UsuarioLoginRequest;
+import com.example.demo.dto.auth.UsuarioLoginResponse;
 import com.example.demo.dto.auth.UsuarioRegistroRequest;
 import com.example.demo.dto.auth.UsuarioRegistroResponse;
 
@@ -10,4 +12,6 @@ import com.example.demo.dto.auth.UsuarioRegistroResponse;
 public interface AuthService {
 
     UsuarioRegistroResponse registrar(UsuarioRegistroRequest request);
+
+    UsuarioLoginResponse login(UsuarioLoginRequest request);
 }
