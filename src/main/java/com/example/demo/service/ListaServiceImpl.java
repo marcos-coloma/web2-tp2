@@ -30,8 +30,8 @@ public class ListaServiceImpl implements ListaService {
     }
 
     @Override
-    public Lista crear(String nombre) {
-        Lista nueva = new Lista(null, nombre);
+    public Lista crear(String nombre, Long usuarioId) {
+        Lista nueva = new Lista(null, nombre, usuarioId);
         return listaRepository.save(nueva);
     }
 

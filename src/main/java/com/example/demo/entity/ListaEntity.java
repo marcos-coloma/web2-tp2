@@ -18,12 +18,21 @@ public class ListaEntity {
 
     private String nombre;
 
+    @ManyToOne
+    @JoinColumn(name = "usuario_id")
+    private UsuarioEntity usuario;
+
     public ListaEntity() {
     }
 
     public ListaEntity(Long id, String nombre) {
+        this(id, nombre, null);
+    }
+
+    public ListaEntity(Long id, String nombre, UsuarioEntity usuario) {
         this.id = id;
         this.nombre = nombre;
+        this.usuario = usuario;
     }
 
     public Long getId() {
@@ -40,5 +49,13 @@ public class ListaEntity {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public UsuarioEntity getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(UsuarioEntity usuario) {
+        this.usuario = usuario;
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
  */
 
 public interface ListaService {
-    Lista crear(String nombre);
+    Lista crear(String nombre, Long usuarioId);
     List<Lista> listar();
     Lista obtener(Long id);
     List<Favorito> listarFavoritos(Long id);

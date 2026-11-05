@@ -2,15 +2,19 @@ package com.example.demo.controller;
 
 import com.example.demo.domain.Favorito;
 import com.example.demo.domain.Lista;
+import com.example.demo.dto.lista.ListaRequest;
 import com.example.demo.dto.lista.MoverFavoritosRequest;
+import com.example.demo.security.UsuarioAutenticado;
 import com.example.demo.service.ListaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -32,10 +36,30 @@ public class ListaController {
     }
 
     @Operation(summary = "Crear una lista de favoritos")
-    @ApiResponse(responseCode = "201", description = "Lista creada correctamente")
+    @ApiResponse(
+            responseCode = "201",
+            description = "Lista creada correctamente",
+            content = @Content(schema = @Schema(implementation = Lista.class))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "Datos inválidos",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado",
+            content = @Content
+    )
     @PostMapping
-    public ResponseEntity<Lista> crear(@RequestBody Lista lista) {
-        Lista creada = service.crear(lista.nombre());
+    public ResponseEntity<Lista> crear(
+            @Valid @RequestBody ListaRequest request,
+            @AuthenticationPrincipal UsuarioAutenticado usuario
+    ) {
+        Lista creada = service.crear(request.nombre(), usuario.id());
 
         URI location = URI.create("/api/listas/" + creada.id());
 
@@ -54,6 +78,11 @@ public class ListaController {
                     schema = @Schema(implementation = ProblemDetail.class)
             )
     )
+    @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado",
+            content = @Content
+    )
     @PostMapping("/{origenId}/mover-favoritos")
     public ResponseEntity<Void> moverFavoritos(
             @PathVariable Long origenId,
@@ -65,6 +94,11 @@ public class ListaController {
 
     @Operation(summary = "Listar todas las listas de favoritos")
     @ApiResponse(responseCode = "200", description = "Listas obtenidas correctamente")
+    @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado",
+            content = @Content
+    )
     @GetMapping
     public ResponseEntity<List<Lista>> listar() {
         return ResponseEntity.ok(service.listar());
@@ -80,6 +114,11 @@ public class ListaController {
                     schema = @Schema(implementation = ProblemDetail.class)
             )
     )
+    @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado",
+            content = @Content
+    )
     @GetMapping("/{id}")
     public ResponseEntity<Lista> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtener(id));
@@ -94,6 +133,11 @@ public class ListaController {
                     mediaType = "application/problem+json",
                     schema = @Schema(implementation = ProblemDetail.class)
             )
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado",
+            content = @Content
     )
     @GetMapping("/{id}/favoritos")
     public ResponseEntity<List<Favorito>> listarFavoritos(
@@ -119,6 +163,11 @@ public class ListaController {
                     mediaType = "application/problem+json",
                     schema = @Schema(implementation = ProblemDetail.class)
             )
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "No autenticado",
+            content = @Content
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
