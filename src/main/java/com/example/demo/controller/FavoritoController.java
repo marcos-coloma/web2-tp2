@@ -4,8 +4,12 @@ import com.example.demo.dto.favorito.FavoritoRequest;
 import com.example.demo.dto.favorito.FavoritoResponse;
 import com.example.demo.service.FavoritoService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,14 +24,12 @@ import java.net.URI;
 import java.util.List;
 
 /**
- * CRUD completo de favoritos, en memoria (sin persistencia real). A
- * diferencia de ProductoController, acá sí hay @RequestBody con @Valid:
- * es el recurso que activa el handler de MethodArgumentNotValidException
- * de GlobalExceptionHandler.
+ * Controller encargado de gestionar las operaciones CRUD de favoritos.
+ * Recibe las solicitudes HTTP y delega la lógica de negocio en FavoritoService.
  */
 @RestController
 @RequestMapping("/api/favoritos")
-@Tag(name = "favoritos", description = "Favoritos del usuario sobre el catálogo de productos (CRUD en memoria)")
+@Tag(name = "favoritos", description = "Gestión de favoritos del usuario")
 public class FavoritoController {
 
     private final FavoritoService service;
@@ -38,31 +40,81 @@ public class FavoritoController {
 
     @GetMapping
     @Operation(summary = "Listar favoritos")
+    @ApiResponse(responseCode = "200", description = "Favoritos obtenidos correctamente")
     public List<FavoritoResponse> listar() {
         return service.listar();
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener un favorito por id", description = "Responde 404 si no existe.")
+    @Operation(summary = "Obtener un favorito por id")
+    @ApiResponse(responseCode = "200", description = "Favorito obtenido correctamente")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Favorito no encontrado",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     public FavoritoResponse obtener(@PathVariable Long id) {
         return service.obtener(id);
     }
 
     @PostMapping
     @Operation(summary = "Crear un favorito")
-    public ResponseEntity<FavoritoResponse> crear(@Valid @RequestBody FavoritoRequest request) {
+    @ApiResponse(responseCode = "201", description = "Favorito creado correctamente")
+    @ApiResponse(
+            responseCode = "400",
+            description = "Datos inválidos",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
+    public ResponseEntity<FavoritoResponse> crear(
+            @Valid @RequestBody FavoritoRequest request
+    ) {
         FavoritoResponse creado = service.crear(request);
         return ResponseEntity.created(URI.create("/api/favoritos/" + creado.id())).body(creado);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar un favorito", description = "Responde 404 si no existe.")
-    public FavoritoResponse actualizar(@PathVariable Long id, @Valid @RequestBody FavoritoRequest request) {
+    @Operation(summary = "Actualizar un favorito")
+    @ApiResponse(responseCode = "200", description = "Favorito actualizado correctamente")
+    @ApiResponse(
+            responseCode = "400",
+            description = "Datos inválidos",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Favorito no encontrado",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
+    public FavoritoResponse actualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody FavoritoRequest request
+    ) {
         return service.actualizar(id, request);
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar un favorito", description = "Responde 404 si no existe.")
+    @Operation(summary = "Eliminar un favorito")
+    @ApiResponse(responseCode = "204", description = "Favorito eliminado correctamente")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Favorito no encontrado",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
         return ResponseEntity.noContent().build();

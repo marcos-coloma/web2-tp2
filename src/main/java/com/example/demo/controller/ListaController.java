@@ -1,4 +1,3 @@
-
 package com.example.demo.controller;
 
 import com.example.demo.domain.Favorito;
@@ -6,6 +5,11 @@ import com.example.demo.domain.Lista;
 import com.example.demo.dto.lista.MoverFavoritosRequest;
 import com.example.demo.service.ListaService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +22,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/listas")
+@Tag(name = "listas", description = "Gestión de listas de favoritos")
 public class ListaController {
 
     private final ListaService service;
@@ -27,6 +32,7 @@ public class ListaController {
     }
 
     @Operation(summary = "Crear una lista de favoritos")
+    @ApiResponse(responseCode = "201", description = "Lista creada correctamente")
     @PostMapping
     public ResponseEntity<Lista> crear(@RequestBody Lista lista) {
         Lista creada = service.crear(lista.nombre());
@@ -39,6 +45,15 @@ public class ListaController {
     }
 
     @Operation(summary = "Mover favoritos a otra lista y eliminar la lista de origen")
+    @ApiResponse(responseCode = "204", description = "Favoritos trasladados correctamente")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Lista de origen o destino no encontrada",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     @PostMapping("/{origenId}/mover-favoritos")
     public ResponseEntity<Void> moverFavoritos(
             @PathVariable Long origenId,
@@ -49,18 +64,37 @@ public class ListaController {
     }
 
     @Operation(summary = "Listar todas las listas de favoritos")
+    @ApiResponse(responseCode = "200", description = "Listas obtenidas correctamente")
     @GetMapping
     public ResponseEntity<List<Lista>> listar() {
         return ResponseEntity.ok(service.listar());
     }
 
     @Operation(summary = "Obtener una lista por su ID")
+    @ApiResponse(responseCode = "200", description = "Lista obtenida correctamente")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Lista no encontrada",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     @GetMapping("/{id}")
     public ResponseEntity<Lista> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtener(id));
     }
 
     @Operation(summary = "Listar los favoritos de una lista")
+    @ApiResponse(responseCode = "200", description = "Favoritos obtenidos correctamente")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Lista no encontrada",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     @GetMapping("/{id}/favoritos")
     public ResponseEntity<List<Favorito>> listarFavoritos(
             @PathVariable Long id
@@ -69,6 +103,23 @@ public class ListaController {
     }
 
     @Operation(summary = "Eliminar una lista de favoritos")
+    @ApiResponse(responseCode = "204", description = "Lista eliminada correctamente")
+    @ApiResponse(
+            responseCode = "404",
+            description = "Lista no encontrada",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
+    @ApiResponse(
+            responseCode = "409",
+            description = "La lista todavía contiene favoritos",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);

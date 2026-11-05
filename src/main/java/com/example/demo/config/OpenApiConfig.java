@@ -6,9 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Metadata general que aparece en Swagger UI (título, descripción, versión).
- * La documentación de cada endpoint puntual va con @Operation en el
- * controller correspondiente.
+ * Configura la información general de la API que aparece en Swagger UI,
+ * incluyendo su título, descripción y versión.
  */
 @Configuration
 public class OpenApiConfig {
@@ -17,9 +16,13 @@ public class OpenApiConfig {
     public OpenAPI demoOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("TP1 · Catálogo y Favoritos")
-                        .description("Catálogo de productos (consumo de una API externa) + favoritos "
-                                + "(CRUD propio en memoria). Práctico de introducción a Spring Boot.")
+                        .title("Web II - API de gestión de favoritos")
+                        .description(
+                                "API REST para consultar un catálogo de productos, "
+                                + "gestionar listas y favoritos, y registrar usuarios. "
+                                + "Utiliza PostgreSQL para la persistencia, "
+                                + "JPA para el acceso a datos y Flyway para las migraciones."
+                        )
                         .version("v1"));
     }
 }
