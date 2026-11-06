@@ -13,9 +13,9 @@ import java.util.List;
 
 public interface ListaService {
     Lista crear(String nombre, Long usuarioId);
-    List<Lista> listar();
-    Lista obtener(Long id);
-    List<Favorito> listarFavoritos(Long id);
-    void moverFavoritos(Long origenId, Long destinoId);
-    void eliminar(Long id);
+    List<Lista> listar(Long usuarioId, String rol);
+    Lista obtener(Long id, Long usuarioId, String rol);
+    List<Favorito> listarFavoritos(Long id, Long usuarioId, String rol);
+    void moverFavoritos(Long origenId, Long destinoId, Long usuarioId, String rol);
+    void eliminar(Long id, Long usuarioId, String rol);
 }

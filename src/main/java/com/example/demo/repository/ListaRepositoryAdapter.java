@@ -32,6 +32,14 @@ public class ListaRepositoryAdapter implements ListaRepository {
     }
 
     @Override
+    public List<Lista> findByUsuarioId(Long usuarioId) {
+    return jpaRepository.findByUsuario_Id(usuarioId)
+            .stream()
+            .map(this::toDomain)
+            .toList();
+    }
+
+    @Override
     public Optional<Lista> findById(Long id) {
         return jpaRepository.findById(id)
                 .map(this::toDomain);

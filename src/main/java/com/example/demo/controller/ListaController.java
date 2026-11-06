@@ -16,6 +16,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.net.URI;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/listas")
 @Tag(name = "listas", description = "Gestión de listas de favoritos")
+@SecurityRequirement(name = "bearerAuth")
 public class ListaController {
 
     private final ListaService service;
@@ -49,11 +51,7 @@ public class ListaController {
                     schema = @Schema(implementation = ProblemDetail.class)
             )
     )
-    @ApiResponse(
-            responseCode = "401",
-            description = "No autenticado",
-            content = @Content
-    )
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @PostMapping
     public ResponseEntity<Lista> crear(
             @Valid @RequestBody ListaRequest request,
@@ -71,6 +69,14 @@ public class ListaController {
     @Operation(summary = "Mover favoritos a otra lista y eliminar la lista de origen")
     @ApiResponse(responseCode = "204", description = "Favoritos trasladados correctamente")
     @ApiResponse(
+            responseCode = "403",
+            description = "No tiene permiso sobre alguna de las listas",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
+    @ApiResponse(
             responseCode = "404",
             description = "Lista de origen o destino no encontrada",
             content = @Content(
@@ -78,34 +84,44 @@ public class ListaController {
                     schema = @Schema(implementation = ProblemDetail.class)
             )
     )
-    @ApiResponse(
-            responseCode = "401",
-            description = "No autenticado",
-            content = @Content
-    )
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @PostMapping("/{origenId}/mover-favoritos")
     public ResponseEntity<Void> moverFavoritos(
             @PathVariable Long origenId,
-            @RequestBody MoverFavoritosRequest request
+            @RequestBody MoverFavoritosRequest request,
+            @AuthenticationPrincipal UsuarioAutenticado usuario
     ) {
-        service.moverFavoritos(origenId, request.listaDestinoId());
+        service.moverFavoritos(
+                origenId,
+                request.listaDestinoId(),
+                usuario.id(),
+                usuario.rol()
+        );
+
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Listar todas las listas de favoritos")
+    @Operation(summary = "Listar las listas de favoritos del usuario")
     @ApiResponse(responseCode = "200", description = "Listas obtenidas correctamente")
-    @ApiResponse(
-            responseCode = "401",
-            description = "No autenticado",
-            content = @Content
-    )
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @GetMapping
-    public ResponseEntity<List<Lista>> listar() {
-        return ResponseEntity.ok(service.listar());
+    public ResponseEntity<List<Lista>> listar(
+            @AuthenticationPrincipal UsuarioAutenticado usuario
+    ) {
+        return ResponseEntity.ok(
+                service.listar(usuario.id(), usuario.rol())
+        );
     }
-
     @Operation(summary = "Obtener una lista por su ID")
     @ApiResponse(responseCode = "200", description = "Lista obtenida correctamente")
+    @ApiResponse(
+            responseCode = "403",
+            description = "No tiene permiso para acceder a esta lista",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     @ApiResponse(
             responseCode = "404",
             description = "Lista no encontrada",
@@ -114,19 +130,28 @@ public class ListaController {
                     schema = @Schema(implementation = ProblemDetail.class)
             )
     )
-    @ApiResponse(
-            responseCode = "401",
-            description = "No autenticado",
-            content = @Content
-    )
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @GetMapping("/{id}")
-    public ResponseEntity<Lista> obtener(@PathVariable Long id) {
-        return ResponseEntity.ok(service.obtener(id));
+    public ResponseEntity<Lista> obtener(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioAutenticado usuario
+    ) {
+        return ResponseEntity.ok(
+                service.obtener(id, usuario.id(), usuario.rol())
+        );
     }
 
     @Operation(summary = "Listar los favoritos de una lista")
     @ApiResponse(responseCode = "200", description = "Favoritos obtenidos correctamente")
     @ApiResponse(
+            responseCode = "403",
+            description = "No tiene permiso para acceder a esta lista",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
+    @ApiResponse(
             responseCode = "404",
             description = "Lista no encontrada",
             content = @Content(
@@ -134,20 +159,27 @@ public class ListaController {
                     schema = @Schema(implementation = ProblemDetail.class)
             )
     )
-    @ApiResponse(
-            responseCode = "401",
-            description = "No autenticado",
-            content = @Content
-    )
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @GetMapping("/{id}/favoritos")
     public ResponseEntity<List<Favorito>> listarFavoritos(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioAutenticado usuario
     ) {
-        return ResponseEntity.ok(service.listarFavoritos(id));
+        return ResponseEntity.ok(
+                service.listarFavoritos(id, usuario.id(), usuario.rol())
+        );
     }
 
     @Operation(summary = "Eliminar una lista de favoritos")
     @ApiResponse(responseCode = "204", description = "Lista eliminada correctamente")
+    @ApiResponse(
+            responseCode = "403",
+            description = "No tiene permiso para eliminar esta lista",
+            content = @Content(
+                    mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)
+            )
+    )
     @ApiResponse(
             responseCode = "404",
             description = "Lista no encontrada",
@@ -164,14 +196,14 @@ public class ListaController {
                     schema = @Schema(implementation = ProblemDetail.class)
             )
     )
-    @ApiResponse(
-            responseCode = "401",
-            description = "No autenticado",
-            content = @Content
-    )
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        service.eliminar(id);
+    public ResponseEntity<Void> eliminar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioAutenticado usuario
+    ) {
+        service.eliminar(id, usuario.id(), usuario.rol());
+
         return ResponseEntity.noContent().build();
     }
 }

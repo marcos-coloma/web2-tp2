@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -82,6 +83,16 @@ public class GlobalExceptionHandler {
                 "Credenciales inválidas"
         );
         problema.setTitle("Error de autenticación");
+        return problema;
+    }
+    
+    @ExceptionHandler(AccessDeniedException.class)
+    public ProblemDetail handleAccesoDenegado(AccessDeniedException ex) {
+        ProblemDetail problema = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage()
+        );
+        problema.setTitle("Acceso denegado");
         return problema;
     }
 }
