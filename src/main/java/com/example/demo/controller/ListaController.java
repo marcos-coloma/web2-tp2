@@ -10,24 +10,27 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.net.URI;
 import java.util.List;
 
 /**
  * Expone los endpoints de las listas de favoritos.
- * Recibe las solicitudes HTTP y delega la lógica de negocio en ListaService.
+ * Todos los endpoints requieren autenticación mediante JWT.
  */
 @RestController
 @RequestMapping("/api/listas")
-@Tag(name = "listas", description = "Gestión de listas de favoritos")
+@Tag(
+        name = "listas",
+        description = "Gestión de listas de favoritos. Requiere autenticación JWT."
+)
 @SecurityRequirement(name = "bearerAuth")
 public class ListaController {
 
@@ -112,6 +115,7 @@ public class ListaController {
                 service.listar(usuario.id(), usuario.rol())
         );
     }
+
     @Operation(summary = "Obtener una lista por su ID")
     @ApiResponse(responseCode = "200", description = "Lista obtenida correctamente")
     @ApiResponse(

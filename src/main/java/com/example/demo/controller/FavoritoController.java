@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ProblemDetail;
@@ -25,11 +26,15 @@ import java.util.List;
 
 /**
  * Controller encargado de gestionar las operaciones CRUD de favoritos.
- * Recibe las solicitudes HTTP y delega la lógica de negocio en FavoritoService.
+ * Todos los endpoints requieren autenticación mediante JWT.
  */
 @RestController
 @RequestMapping("/api/favoritos")
-@Tag(name = "favoritos", description = "Gestión de favoritos del usuario")
+@Tag(
+        name = "favoritos",
+        description = "Gestión de favoritos del usuario. Requiere autenticación JWT."
+)
+@SecurityRequirement(name = "bearerAuth")
 public class FavoritoController {
 
     private final FavoritoService service;
@@ -41,6 +46,7 @@ public class FavoritoController {
     @GetMapping
     @Operation(summary = "Listar favoritos")
     @ApiResponse(responseCode = "200", description = "Favoritos obtenidos correctamente")
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     public List<FavoritoResponse> listar() {
         return service.listar();
     }
@@ -48,6 +54,7 @@ public class FavoritoController {
     @GetMapping("/{id}")
     @Operation(summary = "Obtener un favorito por id")
     @ApiResponse(responseCode = "200", description = "Favorito obtenido correctamente")
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @ApiResponse(
             responseCode = "404",
             description = "Favorito no encontrado",
@@ -63,6 +70,7 @@ public class FavoritoController {
     @PostMapping
     @Operation(summary = "Crear un favorito")
     @ApiResponse(responseCode = "201", description = "Favorito creado correctamente")
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @ApiResponse(
             responseCode = "400",
             description = "Datos inválidos",
@@ -81,6 +89,7 @@ public class FavoritoController {
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar un favorito")
     @ApiResponse(responseCode = "200", description = "Favorito actualizado correctamente")
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @ApiResponse(
             responseCode = "400",
             description = "Datos inválidos",
@@ -107,6 +116,7 @@ public class FavoritoController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar un favorito")
     @ApiResponse(responseCode = "204", description = "Favorito eliminado correctamente")
+    @ApiResponse(responseCode = "401", description = "No autenticado", content = @Content)
     @ApiResponse(
             responseCode = "404",
             description = "Favorito no encontrado",
