@@ -58,7 +58,7 @@ class AuthServiceImplTest {
         String email = "usuario@test.com";
         String password = "MiPassword123";
 
-        when(usuarioRepository.existsByEmail(email)).thenReturn(false);
+        when(usuarioRepository.existsByEmail(email)).thenReturn(true);
 
         when(usuarioRepository.save(any(Usuario.class)))
                 .thenAnswer(invocation -> {
