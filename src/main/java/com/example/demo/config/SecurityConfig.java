@@ -33,7 +33,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/productos/**"
+                                "/api/productos/**",
+                                "/health"
                         ).permitAll()
 
                         .requestMatchers(
